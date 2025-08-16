@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>ABMT (Dot-Probe) — Designed & created by Meaningful Path Therapy</title>
+<style>
+  :root{ --bg:#0e111a; --panel:#151a25; --ink:#f5f7ff; --muted:#a9b0c2; --accent:#7fd3ff; --card:#111827; --radius:18px; --shadow:0 10px 28px rgba(0,0,0,.35); }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{ margin:0; color:var(--ink); background: radial-gradient(1200px 700px at 0% -10%, #1a2250 0%, #0e111a 60%); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Naskh Arabic", "Noto Kufi Arabic", Tahoma; line-height:1.55; }
+  header, footer{max-width:1000px; margin:0 auto; padding:14px 12px}
+  header .brand{font-weight:800; letter-spacing:.2px; font-size:clamp(18px,5vw,22px)}
+  header .credit, footer .credit{color:var(--muted); font-size:12px}
+  main{max-width:1000px; margin:0 auto; padding:0 12px 96px}
+  .card{background:linear-gradient(180deg,#18203a,#141a2a); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px}
+
+  h1{margin:.2rem 0 .7rem; font-size:clamp(20px,6vw,26px)}
+  h2{margin:.2rem 0 .6rem; font-size:clamp(18px,5vw,22px)}
+  p.small{color:var(--muted); font-size:13px; margin:.2rem 0 .7rem}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .stack{display:grid; gap:12px}
+  .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.12); color:#a9b0c2; font-size:12px}
+  select, input[type="number"], input[type="text"]{ background:#0c1220; color:var(--ink); border:1px solid rgba(255,255,255,.15); border-radius:12px; padding:8px 10px; font-size:15px }
+  button{ -webkit-tap-highlight-color: transparent; border:0; background:linear-gradient(90deg,var(--accent),#b1e7ff); color:#081220; font-weight:800; padding:12px 16px; border-radius:14px; cursor:pointer; font-size:15px; box-shadow:0 6px 18px rgba(127,211,255,.35); }
+  button.secondary{background:linear-gradient(90deg,#26304f,#222a44); color:var(--ink); border:1px solid rgba(255,255,255,.12); box-shadow:none}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,.15); color:#a9b0c2}
+  button:disabled{opacity:.5; cursor:not-allowed}
+
+  .hud{display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin:.2rem 0 .6rem}
+  .stat{display:flex; gap:6px; align-items:center; font-size:13px; color:#a9b0c2}
+  .stat b{color:var(--ink)}
+  .arena{position:relative; display:grid; place-items:center; height:56vh; min-height:360px; background:#0b1220; border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden}
+  .fix{font-size:42px; opacity:.9}
+  /* LTR grid so #L is the physical left in all UIs */
+  .pair{position:absolute; inset:0; display:grid; grid-template-columns:1fr 1fr; align-items:center; justify-items:center; gap:8px; padding:0 10%; direction:ltr;}
+  .pair.fade{opacity:0; transition:opacity .08s ease-out}
+  .stim{display:grid; place-items:center; font-size:clamp(18px,4.8vw,28px); padding:12px 16px; min-width:38%; min-height:72px; text-align:center; background:#0a1022; border:1px solid rgba(255,255,255,.15); border-radius:14px; position:relative; direction:auto}
+  .stim.hint{outline:2px dashed rgba(114,240,166,.7); box-shadow:0 0 0 3px rgba(114,240,166,.16) inset}
+  .probe{position:absolute; font-size:46px; transform:translate(-50%,-50%); animation:pulse .9s ease-out}
+  @keyframes pulse{0%{transform:translate(-50%,-50%) scale(.85);opacity:0}50%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+  /* Force physical L/R for taps */
+  .tapZones{position:absolute; inset:0; display:grid; grid-template-columns:1fr 1fr; direction:ltr}
+  .tapZones>div{opacity:0}
+  .muted{color:var(--muted)}
+  .banner{margin:.3rem 0 .6rem; padding:8px 12px; border:1px solid rgba(255,255,255,.12); border-radius:12px; font-size:14px; color:#d9e3ff; background:linear-gradient(180deg,#11192e,#0e1629)}
+
+  .nav{position:fixed; left:0; right:0; bottom:0; backdrop-filter: blur(8px); background: linear-gradient(180deg, rgba(10,15,30,.0) 0%, rgba(10,15,30,.85) 40%, rgba(10,15,30,.95) 100%); border-top:1px solid rgba(255,255,255,.08); padding:10px; display:flex; gap:8px; justify-content:space-between; align-items:center;}
+  .nav .left, .nav .right{display:flex; gap:8px}
+  .footerSpace{height:76px}
+
+  .overlay{position:fixed; inset:0; background:rgba(8,12,20,.86); display:none; align-items:center; justify-content:center; padding:20px; z-index:50}
+  .overlay .box{max-width:720px; background:linear-gradient(180deg,#18203a,#141a2a); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:18px; box-shadow:var(--shadow)}
+  .overlay h3{margin:0 0 8px; font-size:20px}
+  .overlay p{margin:.3rem 0; color:#cdd6f6; font-size:14px}
+
+  .ltr-num{direction:ltr; unicode-bidi:embed}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand" id="brand">ABMT (Dot-Probe)</div>
+  <div class="credit" id="credit">Designed &amp; created by <strong>Meaningful Path Therapy</strong> — © Abdullah Al-Shoaibi</div>
+</header>
+
+<main>
+  <!-- SETUP -->
+  <section class="card" id="setup">
+    <h1 id="title">Classic ABMT — biasing attention towards the positive</h1>
+    <p class="small" id="desc">You’ll see two items briefly. A probe then appears where one of them was. Tap the <b>left/right side</b> (or press ←/→) as fast and accurately as you can.</p>
+
+    <div class="stack">
+      <div class="row">
+        <span class="pill"><span id="lblLang">Language</span>
+          <select id="langSel"><option value="en" selected>English</option><option value="ar">العربية</option></select>
+        </span>
+        <span class="pill"><span id="lblStimLang">Stimulus language</span>
+          <select id="stimLangSel">
+            <option value="auto" selected>Auto (match UI)</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+          </select>
+        </span>
+        <span class="pill"><span id="lblStyle">Training style</span>
+          <select id="styleSel"><option value="classic" selected>Classic (implicit)</option><option value="guided">Guided (simple)</option></select>
+        </span>
+        <span class="pill"><span id="lblPair">Pair type</span>
+          <select id="pairSel"><option value="posneg" selected>Positive vs Negative</option><option value="posneu">Positive vs Neutral</option><option value="negneu">Negative vs Neutral</option></select>
+        </span>
+        <span class="pill"><span id="lblSOA">SOA (ms)</span>
+          <select id="soaSel"><option>200</option><option selected>500</option><option>800</option></select>
+        </span>
+        <span class="pill"><span id="lblResp">Max response (ms)</span>
+          <select id="maxRespSel"><option>1500</option><option selected>2500</option><option>3500</option></select>
+        </span>
+      </div>
+
+      <div class="row">
+        <span class="pill">Practice <input id="pracTrials" type="number" min="0" max="120" value="8" style="width:80px"> <span class="muted" id="c50">(50% congruent)</span></span>
+        <span class="pill">Training <input id="trainTrials" type="number" min="0" max="400" value="80" style="width:80px">
+          <span class="pill" style="margin-inline-start:6px"><span id="lblCong">Congruent %</span>
+            <select id="congSel"><option>75</option><option>85</option><option selected>90</option><option>95</option><option>100</option></select>
+          </span>
+        </span>
+        <span class="pill">Assessment <input id="assessTrials" type="number" min="0" max="200" value="40" style="width:80px"> <span class="muted" id="c50b">(50% congruent)</span></span>
+      </div>
+
+      <div class="row">
+        <span class="pill"><span id="lblITI">ITI (ms)</span>
+          <select id="itiSel"><option>400</option><option selected>700</option><option>1000</option></select>
+        </span>
+        <span class="pill"><span id="lblJit">Jitter ±</span>
+          <select id="jitSel"><option>0</option><option selected>150</option><option>300</option></select>
+        </span>
+        <span class="pill"><span id="lblProbe">Probe</span>
+          <select id="probeSel"><option value="dot" selected>Dot</option><option value="arrow">Arrow</option></select>
+        </span>
+        <span class="pill"><span id="lblPid">Participant ID</span> <input id="pid" type="text" placeholder="optional" style="width:140px"></span>
+        <span class="pill"><span id="lblTut">Quick tutorial</span>
+          <select id="tutSel"><option value="on" selected>On</option><option value="off">Off</option></select>
+        </span>
+      </div>
+
+      <div class="row">
+        <button id="startBtn">Start session</button>
+        <button id="howBtn" class="ghost">How it works</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TASK -->
+  <section class="card" id="task" style="display:none">
+    <div class="banner" id="banner">Instruction will appear here.</div>
+    <div class="hud">
+      <div class="stat"><span id="lblBlock">Block</span> <b id="blkName">—</b></div>
+      <div class="stat"><span id="lblTrial">Trial</span> <b class="ltr-num" id="tNum">1</b>/<b class="ltr-num" id="tTotal">—</b></div>
+      <div class="stat"><span id="lblAcc">Accuracy</span> <b id="acc">—</b></div>
+      <div class="stat"><span id="lblRT">Mean RT</span> <b id="mrt">—</b></div>
+    </div>
+
+    <div class="arena" id="arena"><div class="fix" id="fix">+</div></div>
+    <div class="footerSpace"></div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="card" id="summary" style="display:none">
+    <h2 id="sumTitle">Session summary</h2>
+    <div class="stack">
+      <div class="row">
+        <div class="pill">Bias index (ms): <b id="bias">0</b></div>
+        <div class="pill">Overall accuracy: <b id="sAcc">0%</b></div>
+        <div class="pill">Mean RT (correct): <b id="sRT">0 ms</b></div>
+      </div>
+      <div class="stack" id="blockBreakdown"></div>
+      <p class="small" id="sumNote">Bias index = mean RT (incongruent) − mean RT (congruent). Positive numbers indicate faster responses when the probe follows the positive item.</p>
+      <div class="row">
+        <button id="againBtn">Run again</button>
+        <button id="csvBtn" class="secondary">Export CSV</button>
+        <button id="homeBtn" class="ghost">Home</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Sticky controls -->
+<div class="nav" id="nav" role="navigation" aria-label="Controls">
+  <div class="left"><button id="pauseBtn" class="secondary" disabled>Pause</button><button id="resumeBtn" style="display:none">Resume</button></div>
+  <div class="right"><button id="endBtn" class="secondary" disabled>End session</button></div>
+</div>
+
+<!-- Tutorial overlay -->
+<div class="overlay" id="overlay">
+  <div class="box">
+    <h3 id="ovTitle">Quick tutorial</h3>
+    <p id="ovLine1">You’ll see two words. A dot/arrow appears on the left or right. Tap that side (or press ←/→) quickly and accurately.</p>
+    <p id="ovLine2">In Training, the probe usually follows the positive word. In Guided mode you can set it to always follow it.</p>
+    <p id="ovLine3" class="muted">Tip: Ignore the meaning during the task — just respond to the dot/arrow position.</p>
+    <div style="margin-top:10px"><button id="ovStart">Start</button></div>
+  </div>
+</div>
+
+<footer><div class="credit" id="creditBottom">Designed &amp; created by <strong>Meaningful Path Therapy</strong> — © Abdullah Al-Shoaibi</div></footer>
+
+<script>
+/* ==== Content banks ==== */
+const EN = { pos:["joy","kind","capable","calm","progress","grateful","support","friendly","hope","steady","patient","resourceful","curious","brave","ready","caring","safe","light","relief","choice","able","learning","worthy","proud","fair","clear","rested","connected","free","encouraging","comfort","balanced","healing","resilient","creative","playful","peace","optimistic","confident"],
+             neg:["fail","useless","panic","stuck","worthless","angry","alone","guilty","hopeless","tired","ashamed","hurt","problem","worry","scared","broken","unsafe","heavy","dread","trapped","stupid","pointless","reject","unfair","drained","tense","anxious","critical","helpless","doomed"],
+             neu:["window","table","notebook","carpet","bottle","chair","road","building","neutral","object","stone","paper","cup","door","path","cloud"]};
+const AR = { pos:["فرح","طيب","قادر","هادئ","تقدّم","ممتن","دعم","ودود","أمل","ثابت","صبور","حلّال مشكلات","فضولى","شجاع","جاهز","مراعٍ","آمن","خفيف","ارتياح","اختيار","متعلّم","مستحق","فخور","عادل","واضح","مرتاح","مرتبط","حر","مشجّع","راحة","متوازن","شفاء","مرن","مبدع","مرح","سلام","متفائل","واثق"],
+             neg:["فشل","عديم الفائدة","ذعر","عالق","عديم القيمة","غاضب","وحيد","مذنب","ميؤوس","متعب","مخزٍ","متألم","مشكلة","قلق","خائف","مكسور","غير آمن","ثقيل","رهبة","محبوس","غبي","بلا معنى","مرفوض","غير عادل","مستنزَف","توتر","ناقد","عاجز"],
+             neu:["نافذة","طاولة","دفتر","سجادة","زجاجة","كرسى","طريق","مبنى","شىء","حجر","ورقة","كوب","باب","ممر","سحابة"]};
+
+/* ==== UI strings ==== */
+const STR = {
+  en:{ brand:"ABMT (Dot-Probe)", title:"Classic ABMT — biasing attention towards the positive",
+       desc:"You’ll see two items briefly. A probe then appears where one of them was. Tap the left/right side (or press ←/→) as fast and accurately as you can.",
+       Language:"Language", StimLang:"Stimulus language", Style:"Training style", Pair:"Pair type", SOA:"SOA (ms)", MaxResp:"Max response (ms)",
+       Cong:"Congruent %", ITI:"ITI (ms)", Jitter:"Jitter ±", Probe:"Probe", PID:"Participant ID", Tutorial:"Quick tutorial",
+       Practice50:"(50% congruent)", Assessment50:"(50% congruent)", Start:"Start session", How:"How it works",
+       Block:"Block", Trial:"Trial", Accuracy:"Accuracy", MeanRT:"Mean RT",
+       SumTitle:"Session summary",
+       BiasNote:"Bias index = mean RT (incongruent) − mean RT (congruent). Positive numbers indicate faster responses when the probe follows the positive item.",
+       Again:"Run again", Export:"Export CSV", Home:"Home",
+       Pause:"Pause", Resume:"Resume", End:"End session",
+       Practice:"Practice", Training:"Training", Assessment:"Assessment",
+       PairTypes:{posneg:"Positive vs Negative", posneu:"Positive vs Neutral", negneu:"Negative vs Neutral"},
+       ProbeDot:"•", ProbeLeft:"◀", ProbeRight:"▶",
+       HowText:"Fixation (+), then two words for the SOA. A probe appears where one word was. Respond to the probe location (left/right). In Training, the probe mostly follows the positive word.",
+       BannerClassic:(p)=>`Ignore the meaning; respond to the ${p} position. Training makes the probe usually follow the positive word.`,
+       BannerGuided:(p,pc)=>`Guided mode: respond to the ${p} position. During Training the probe follows the positive word ${pc}% of the time.`,
+       OvTitle:"Quick tutorial", Ov1:"You’ll see two words. A dot/arrow appears on the left or right. Tap that side (or press ←/→) quickly and accurately.",
+       Ov2:"In Training, the probe usually follows the positive word. In Guided mode you can set it to always follow it.",
+       Ov3:"Tip: Ignore the meaning during the task — just respond to the dot/arrow position.",
+       Designed:"Designed & created by ",
+       StimLangOptions:{auto:"Auto (match UI)", en:"English", ar:"العربية"},
+       BlockAcc:"Block accuracy", MeanRTShort:"Mean RT", Trials:"Trials" },
+  ar:{ brand:"تدريب التحيز الانتباهى (نقطة-المسبار)", title:"نمط ABMT الكلاسيكى — توجيه الانتباه نحو الإيجابى",
+       desc:"ستظهر كلمتان سريعًا ثم يظهر مسبار فى موضع إحدى الكلمتين. اضغط/ى على الجهة اليُسرى/اليُمنى (أو ←/→) بسرعة ودقة.",
+       Language:"اللغة", StimLang:"لغة المحفزات", Style:"أسلوب التدريب", Pair:"نوع الزوج", SOA:"مدة العرض (مللى)", MaxResp:"الاستجابة القصوى (مللى)",
+       Cong:"نسبة التوافق", ITI:"الفاصل (مللى)", Jitter:"تذبذب ±", Probe:"المسبار", PID:"معرّف مشارك", Tutorial:"دليل سريع",
+       Practice50:"(٪٥٠ توافق)", Assessment50:"(٪٥٠ توافق)", Start:"ابدأ الجلسة", How:"كيف يعمل؟",
+       Block:"الفقرة", Trial:"المحاولة", Accuracy:"الدقة", MeanRT:"متوسط الزمن",
+       SumTitle:"ملخص الجلسة",
+       BiasNote:"مؤشر التحيز = متوسط زمن (غير المتوافق) − (المتوافق). رقم موجب يعنى استجابة أسرع حين يتبع المسبار الكلمة الإيجابية.",
+       Again:"تشغيل مجددًا", Export:"تصدير CSV", Home:"الصفحة الرئيسية",
+       Pause:"إيقاف مؤقت", Resume:"استئناف", End:"إنهاء الجلسة",
+       Practice:"تمهيد", Training:"تدريب", Assessment:"تقييم",
+       PairTypes:{posneg:"إيجابى × سلبى", posneu:"إيجابى × محايد", negneu:"سلبى × محايد"},
+       ProbeDot:"•", ProbeLeft:"◀", ProbeRight:"▶",
+       HowText:"علامة تثبيت (+) ثم كلمتان لمدة العرض. يظهر المسبار فى موضع إحدى الكلمتين. استجب/ى للجهة (يسار/يمين). فى التدريب يتبع المسبار غالبًا الكلمة الإيجابية.",
+       BannerClassic:(p)=>`تجاهل/ى المعنى؛ استجب/ى لموضع ${p}. فى التدريب يتبع المسبار غالبًا الكلمة الإيجابية.`,
+       BannerGuided:(p,pc)=>`وضع إرشادى: استجب/ى لموضع ${p}. أثناء التدريب يتبع المسبار الكلمة الإيجابية بنسبة ${pc}٪.`,
+       OvTitle:"دليل سريع", Ov1:"سترى كلمتين. تظهر نقطة/سهم يسارًا أو يمينًا. اضغط/ى على نفس الجهة بسرعة ودقة.",
+       Ov2:"فى التدريب يتبع المسبار غالبًا الكلمة الإيجابية. فى الوضع الإرشادى يمكن ضبطه ليتبعها دائمًا.",
+       Ov3:"نصيحة: تجاهل/ى المعنى أثناء المهمة — فقط استجب/ى لموضع النقطة/السهم.",
+       Designed:"مصمَّم ومطوَّر بواسطة ",
+       StimLangOptions:{auto:"تلقائى (حسب الواجهة)", en:"الإنجليزية", ar:"العربية"},
+       BlockAcc:"الدقة فى الفقرة", MeanRTShort:"متوسط الزمن", Trials:"المحاولات" }
+};
+
+/* ==== Helpers ==== */
+const $ = s=>document.querySelector(s);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const ms = ()=>performance.now();
+const mean = arr => { const v=arr.filter(Number.isFinite); return v.length? v.reduce((a,b)=>a+b,0)/v.length : NaN; };
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const ltrNum = s => `<span class="ltr-num">${s}</span>`;
+const isCorrect = v => (v===1 || v===true || v==="1" || v==="true");
+
+/* ==== State ==== */
+const state = {
+  lang:"en", dir:"ltr", uiBanks:EN, stimLang:"auto", banks:EN,
+  style:"classic", pair:"posneg",
+  soa:500, maxResp:2500, iti:700, jitter:150, probeType:"dot",
+  congTrain:0.9,
+  blocks:[], blockIdx:0, trialIdx:0, totalTrials:0,
+  accCount:0, errCount:0, rtSum:0, rtN:0,
+  awaiting:false, paused:false, ended:false,
+  data:[],
+  positiveSide:null, probeSide:null, congruent:null,
+  timers:[], startRT:0, pid:"", hintTrials:3,
+  leftText:"", rightText:""
+};
+
+/* ==== Language/UI sync ==== */
+function setLang(lang){
+  state.lang = lang;
+  state.dir = (lang==="ar")? "rtl":"ltr";
+  document.documentElement.lang = (lang==="ar")? "ar":"en-GB";
+  document.documentElement.dir = state.dir;
+  const T = STR[lang];
+
+  $("#brand").textContent = T.brand;
+  $("#title").textContent = T.title;
+  $("#desc").textContent = T.desc;
+
+  $("#lblLang").textContent = T.Language;
+  $("#lblStimLang").textContent = T.StimLang;
+  $("#lblStyle").textContent = T.Style;
+  $("#lblPair").textContent = T.Pair;
+  $("#lblSOA").textContent = T.SOA;
+  $("#lblResp").textContent = T.MaxResp;
+  $("#lblCong").textContent = T.Cong;
+  $("#lblITI").textContent = T.ITI;
+  $("#lblJit").textContent = T.Jitter;
+  $("#lblProbe").textContent = T.Probe;
+  $("#lblPid").textContent   = T.PID;
+  $("#lblTut").textContent   = T.Tutorial;
+
+  $("#c50").textContent = T.Practice50;
+  $("#c50b").textContent = T.Assessment50;
+  $("#startBtn").textContent = T.Start;
+  $("#howBtn").textContent = T.How;
+  $("#lblBlock").textContent = T.Block;
+  $("#lblTrial").textContent = T.Trial;
+  $("#lblAcc").textContent = T.Accuracy;
+  $("#lblRT").textContent = T.MeanRT;
+  $("#sumTitle").textContent = T.SumTitle;
+  $("#sumNote").textContent = T.BiasNote;
+  $("#againBtn").textContent = T.Again;
+  $("#csvBtn").textContent = T.Export;
+  $("#homeBtn").textContent = T.Home;
+  $("#pauseBtn").textContent = T.Pause;
+  $("#resumeBtn").textContent = T.Resume;
+  $("#endBtn").textContent = T.End;
+
+  $("#pairSel").innerHTML = `<option value="posneg">${T.PairTypes.posneg}</option><option value="posneu">${T.PairTypes.posneu}</option><option value="negneu">${T.PairTypes.negneu}</option>`;
+
+  const s = $("#stimLangSel");
+  s.options[0].text = T.StimLangOptions.auto;
+  s.options[1].text = T.StimLangOptions.en;
+  s.options[2].text = T.StimLangOptions.ar;
+
+  $("#credit").innerHTML = `${T.Designed}<strong>Meaningful Path Therapy</strong> — © Abdullah Al-Shoaibi`;
+  $("#creditBottom").innerHTML = $("#credit").innerHTML;
+
+  state.uiBanks = (lang==="ar")? AR : EN;
+  updateBanner();
+}
+function updateBanner(){
+  const T = STR[state.lang];
+  const pc = Math.round(state.congTrain*100);
+  const text = (state.style==="guided") ? T.BannerGuided((state.lang==="ar"?"المسبار":"probe"), pc)
+                                        : T.BannerClassic((state.lang==="ar"?"المسبار":"probe"));
+  $("#banner").textContent = text;
+}
+setLang("en");
+
+/* ==== Build blocks ==== */
+function buildBlocks(){
+  const prac = clamp(parseInt($("#pracTrials").value||"0",10),0,999);
+  const train = clamp(parseInt($("#trainTrials").value||"0",10),0,999);
+  const assess = clamp(parseInt($("#assessTrials").value||"0",10),0,999);
+  const congSel = clamp(parseInt($("#congSel").value||"90",10),50,100)/100;
+
+  state.congTrain = congSel;
+  const T = STR[state.lang];
+
+  const blocks = [];
+  if(prac>0) blocks.push({name:T.Practice, trials:prac, cong:0.5});
+  if(train>0) blocks.push({name:T.Training, trials:train, cong:congSel});
+  if(assess>0) blocks.push({name:T.Assessment, trials:assess, cong:0.5});
+
+  state.blocks = blocks;
+  state.totalTrials = blocks.reduce((a,b)=>a+b.trials,0);
+}
+
+/* ==== Session flow ==== */
+function startSession(){
+  setLang($("#langSel").value);
+  state.stimLang = $("#stimLangSel").value;
+  state.banks = (state.stimLang==="auto") ? state.uiBanks : (state.stimLang==="ar" ? AR : EN);
+
+  state.style = $("#styleSel").value;
+  state.pair = $("#pairSel").value;
+  state.soa = parseInt($("#soaSel").value,10);
+  state.maxResp = parseInt($("#maxRespSel").value,10);
+  state.iti = parseInt($("#itiSel").value,10);
+  state.jitter = parseInt($("#jitSel").value,10);
+  state.probeType = $("#probeSel").value;
+  state.pid = ($("#pid").value||"").trim();
+  state.hintTrials = (state.style==="guided" ? 3 : 0);
+
+  buildBlocks(); updateBanner();
+
+  state.accCount=0; state.errCount=0; state.rtSum=0; state.rtN=0;
+
+  state.blockIdx=0; state.trialIdx=0; state.data=[];
+  state.paused=false; state.ended=false;
+
+  $("#setup").style.display="none";
+  $("#summary").style.display="none";
+  $("#task").style.display="block";
+  $("#nav").style.display="flex";
+  $("#endBtn").disabled=false; $("#pauseBtn").disabled=false;
+
+  if($("#tutSel").value==="on"){ showOverlay(); } else { startBlock(); }
+}
+function showOverlay(){
+  const T = STR[state.lang];
+  $("#ovTitle").textContent = T.OvTitle;
+  $("#ovLine1").textContent = T.Ov1;
+  $("#ovLine2").textContent = T.Ov2;
+  $("#ovLine3").textContent = T.Ov3;
+  $("#overlay").style.display="flex";
+}
+$("#ovStart").addEventListener("click", ()=>{ $("#overlay").style.display="none"; startBlock(); });
+
+function startBlock(){
+  if(state.blockIdx>=state.blocks.length){ return endSession(); }
+  const blk = state.blocks[state.blockIdx];
+  $("#blkName").textContent = blk.name;
+  $("#tTotal").textContent = blk.trials;
+  state.trialIdx = 0;
+  $("#acc").innerHTML = "—"; $("#mrt").innerHTML = "—";
+  nextTrial();
+}
+function nextTrial(){
+  if(state.paused || state.ended) return;
+  const blk = state.blocks[state.blockIdx];
+  state.trialIdx++;
+  if(state.trialIdx>blk.trials){ state.blockIdx++; return startBlock(); }
+  $("#tNum").textContent = state.trialIdx;
+
+  clearTimers();
+  showFixation(()=>showPair(()=>showProbe()));
+}
+
+/* ==== Trial parts ==== */
+function showFixation(cb){
+  $("#arena").innerHTML = `<div class="fix" id="fix">+</div>`;
+  const base = state.iti, jit = state.jitter;
+  state.timers.push(setTimeout(cb, base + (Math.random()*jit*2 - jit)));
+}
+function makePair(){
+  const b = state.banks;
+  let left="", right="", positiveSide=null;
+
+  if(state.pair==="posneg"){
+    if(Math.random()<0.5){ left=pick(b.pos); right=pick(b.neg); positiveSide="L"; }
+    else { left=pick(b.neg); right=pick(b.pos); positiveSide="R"; }
+  } else if(state.pair==="posneu"){
+    if(Math.random()<0.5){ left=pick(b.pos); right=pick(b.neu); positiveSide="L"; }
+    else { left=pick(b.neu); right=pick(b.pos); positiveSide="R"; }
+  } else { // neg vs neutral (no positive)
+    if(Math.random()<0.5){ left=pick(b.neg); right=pick(b.neu); }
+    else { left=pick(b.neu); right=pick(b.neg); }
+    positiveSide=null;
+  }
+  return {left,right,positiveSide};
+}
+function showPair(cb){
+  const arena = $("#arena");
+  const {left,right,positiveSide} = makePair();
+  state.positiveSide = positiveSide;
+  state.leftText = left; state.rightText = right;
+
+  const hintL = (state.hintTrials>0 && positiveSide==="L")? " hint": "";
+  const hintR = (state.hintTrials>0 && positiveSide==="R")? " hint": "";
+
+  arena.innerHTML = `
+    <div class="pair" id="pair">
+      <div class="stim${hintL}" id="L">${left}</div>
+      <div class="stim${hintR}" id="R">${right}</div>
+    </div>`;
+  state.timers.push(setTimeout(()=>{ if(state.hintTrials>0) state.hintTrials--; cb(); }, state.soa));
+}
+function placeProbe(side){
+  const arena = $("#arena");
+  const target = (side==='L') ? $("#L") : $("#R");
+  const ar = arena.getBoundingClientRect();
+  const r = target.getBoundingClientRect();
+  let cx = r.left + r.width/2 - ar.left;
+  let cy = r.top + r.height/2 - ar.top;
+
+  // Offset outward so the probe is near—but not on top of—the word
+  const outward = Math.max(24, Math.min(40, r.width * 0.18)); // responsive
+  cx += (side==='L' ? -outward : outward);
+
+  const probe = $("#probe");
+  probe.style.left = `${cx}px`;
+  probe.style.top  = `${cy}px`;
+}
+function showProbe(){
+  const arena = $("#arena");
+  const blk = state.blocks[state.blockIdx];
+  let probeSide = (Math.random()<0.5) ? "L":"R";
+  let congruent = null;
+
+  if(state.positiveSide){
+    const wantCongruent = (Math.random() < (state.style==="guided" ? 1.0 : blk.cong)); // guided = 100%
+    probeSide = wantCongruent ? state.positiveSide : (state.positiveSide==="L" ? "R":"L");
+    congruent = (probeSide === state.positiveSide);
+  } else { congruent = null; }
+
+  state.probeSide = probeSide; state.congruent = congruent;
+
+  const T = STR[state.lang];
+  const probeChar = (state.probeType==="dot") ? T.ProbeDot : (probeSide==="L" ? T.ProbeLeft : T.ProbeRight);
+
+  // Add probe first, compute its position using current word boxes, then fade the words
+  arena.insertAdjacentHTML("beforeend", `<div class="probe" id="probe">${probeChar}</div>
+                                         <div class="tapZones"><div id="tapL"></div><div id="tapR"></div></div>`);
+  placeProbe(probeSide);
+
+  const pair = $("#pair");
+  if(pair){ pair.classList.add("fade"); setTimeout(()=>{ if(pair) pair.style.display="none"; }, 90); }
+
+  state.awaiting = true; state.startRT = ms();
+
+  // Pointer coordinate fallback and direct clicks
+  const zone = arena.querySelector(".tapZones");
+  zone.onpointerdown = (e)=>{
+    if(!state.awaiting) return;
+    const rect = zone.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    registerResponse( x < rect.width/2 ? "L" : "R" );
+  };
+  $("#tapL").onclick = ()=>registerResponse("L");
+  $("#tapR").onclick = ()=>registerResponse("R");
+
+  // Keyboard
+  window.onkeydown = (e)=>{ if(!state.awaiting) return;
+    if(e.key==="ArrowLeft"){ registerResponse("L"); }
+    else if(e.key==="ArrowRight"){ registerResponse("R"); }
+  };
+
+  state.timers.push(setTimeout(()=>{ if(state.awaiting){ registerResponse(null,true); } }, state.maxResp));
+}
+
+/* ==== HUD ==== */
+function updateHUD(){
+  const currentBlockNumber = state.blockIdx + 1;
+  const rows = state.data.filter(r => r.blockIdx === currentBlockNumber);
+  const total = rows.length;
+
+  if(total === 0){ $("#acc").innerHTML = "—"; $("#mrt").innerHTML = "—"; return; }
+
+  const correct = rows.filter(r => isCorrect(r.correct)).length;
+  const rts = rows.filter(r => isCorrect(r.correct) && Number.isFinite(+r.rt)).map(r => +r.rt);
+  const mrt = rts.length ? Math.round(mean(rts)) : "—";
+
+  const pct = Math.round((100 * correct) / total);
+  const pctStr  = (state.lang === "ar") ? ltrNum(pct + "%") : (pct + "%");
+  const fracStr = (state.lang === "ar") ? ltrNum(`${correct}/${total}`) : `${correct}/${total}`;
+  const mrtStr  = (state.lang === "ar" && mrt!=="—") ? ltrNum(mrt + " ms") : (mrt==="—" ? "—" : (mrt + " ms"));
+
+  $("#acc").innerHTML = `${pctStr} (${fracStr})`;
+  $("#mrt").innerHTML = mrtStr;
+}
+
+/* ==== Register response ==== */
+function registerResponse(side, isMiss=false){
+  if(!state.awaiting || state.paused || state.ended) return;
+  state.awaiting=false;
+
+  const rt = isMiss ? NaN : (ms() - state.startRT);
+  const correct = isMiss ? 0 : (side === state.probeSide ? 1 : 0);
+
+  if(correct){ state.accCount++; state.rtSum += rt; state.rtN++; } else { state.errCount++; }
+
+  const blk = state.blocks[state.blockIdx];
+
+  state.data.push({
+    pid: state.pid || "", lang: state.lang, stimLang: state.stimLang, style: state.style,
+    block: blk.name, blockIdx: state.blockIdx+1, trial: state.trialIdx,
+    pairType: state.pair, soa: state.soa, iti: state.iti, probeType: state.probeType,
+    posSide: state.positiveSide || "", probeSide: state.probeSide,
+    congruent: (state.congruent===null? "" : (state.congruent?1:0)),
+    responseSide: side || "", correct, rt: Number.isFinite(rt)? Math.round(rt) : "",
+    left: state.leftText, right: state.rightText, time: new Date().toISOString()
+  });
+
+  updateHUD();
+  state.timers.push(setTimeout(nextTrial, 180));
+}
+
+/* ==== Summary & CSV ==== */
+function endSession(){
+  if(state.ended) return;
+  state.ended = true; clearTimers();
+  $("#task").style.display="none"; $("#summary").style.display="block"; $("#nav").style.display="none";
+
+  const congRT = state.data.filter(r=>r.congruent===1 && isCorrect(r.correct)).map(r=>+r.rt).filter(Number.isFinite);
+  const incongRT = state.data.filter(r=>r.congruent===0 && isCorrect(r.correct)).map(r=>+r.rt).filter(Number.isFinite);
+  const mC = mean(congRT), mI = mean(incongRT);
+  const bias = (Number.isFinite(mC) && Number.isFinite(mI)) ? Math.round(mI - mC) : 0;
+
+  const overallRT = mean(state.data.filter(r=>isCorrect(r.correct)).map(r=>+r.rt).filter(Number.isFinite));
+  const totalCorrect = state.data.filter(r=>isCorrect(r.correct)).length;
+  const totalTrials = state.data.length;
+  const accPct = totalTrials ? Math.round(100 * totalCorrect / totalTrials) : 0;
+
+  $("#bias").textContent = isNaN(bias)? "0" : String(bias);
+  $("#sRT").textContent = Number.isFinite(overallRT) ? Math.round(overallRT)+" ms" : "—";
+  $("#sAcc").textContent = accPct+"%";
+
+  const T = STR[state.lang];
+  const container = $("#blockBreakdown");
+  container.innerHTML = "";
+  const groups = {};
+  for(const row of state.data){
+    const k = row.blockIdx;
+    if(!groups[k]) groups[k] = {name:row.block, trials:0, correct:0, rts:[]};
+    groups[k].trials++;
+    if(isCorrect(row.correct)){ groups[k].correct++; if(Number.isFinite(+row.rt)) groups[k].rts.push(+row.rt); }
+  }
+  Object.keys(groups).sort((a,b)=>a-b).forEach(k=>{
+    const g = groups[k];
+    const pct = g.trials? Math.round(100*g.correct/g.trials) : 0;
+    const mrt = g.rts.length? Math.round(mean(g.rts)) : "—";
+    const pctStr = (state.lang==="ar")? ltrNum(pct+"%") : (pct+"%");
+    const fracStr = (state.lang==="ar")? ltrNum(`${g.correct}/${g.trials}`) : `${g.correct}/${g.trials}`;
+    const mrtStr = (state.lang==="ar" && mrt!=="—")? ltrNum(mrt+" ms") : (mrt==="—"?"—":(mrt+" ms"));
+    const row = document.createElement("div");
+    row.className="row";
+    row.innerHTML = `
+      <div class="pill">${g.name}</div>
+      <div class="pill">${T.BlockAcc}: <b>${pctStr} (${fracStr})</b></div>
+      <div class="pill">${T.MeanRTShort}: <b>${mrtStr}</b></div>
+      <div class="pill">${T.Trials}: <b>${(state.lang==="ar")? ltrNum(String(g.trials)) : g.trials}</b></div>`;
+    container.appendChild(row);
+  });
+}
+function exportCSV(){
+  const header = ["pid","lang","stimLang","style","block","blockIdx","trial","pairType","soa","iti","probeType","posSide","probeSide","congruent","responseSide","correct","rt","left","right","time"];
+  const rows = state.data.map(r=> header.map(k=> (r[k]!==undefined? r[k] : "") ).join(","));
+  const csv = [header.join(",")].concat(rows).join("\n");
+  const blob = new Blob([csv], {type:"text/csv"}); const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "ABMT_trials.csv"; a.click();
+}
+
+/* ==== Timers & Controls ==== */
+function clearTimers(){ state.timers.forEach(t=>clearTimeout(t)); state.timers=[]; }
+$("#startBtn").addEventListener("click", startSession);
+$("#endBtn").addEventListener("click", endSession);
+$("#againBtn").addEventListener("click", startSession);
+$("#homeBtn").addEventListener("click", ()=>{ clearTimers(); state.ended=true; $("#summary").style.display="none"; $("#task").style.display="none"; $("#setup").style.display="block"; $("#nav").style.display="flex"; });
+$("#csvBtn").addEventListener("click", exportCSV);
+$("#pauseBtn").addEventListener("click", ()=>{ state.paused=true; $("#pauseBtn").style.display="none"; $("#resumeBtn").style.display="inline-block"; });
+$("#resumeBtn").addEventListener("click", ()=>{ state.paused=false; $("#pauseBtn").style.display="inline-block"; $("#resumeBtn").style.display="none"; });
+$("#howBtn").addEventListener("click", ()=>{ alert( STR[state.lang].HowText ); });
+
+$("#langSel").addEventListener("change", (e)=>{ setLang(e.target.value); });
+$("#styleSel").addEventListener("change", ()=>{ state.style=$("#styleSel").value; updateBanner(); });
+
+/* Init */
+setLang("en");
+</script>
+</body>
+</html>
